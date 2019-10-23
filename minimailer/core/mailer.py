@@ -31,43 +31,40 @@ class Mailer(asab.ConfigObject):
 		if len(conf_to) == 0:
 			raise ValueError("The 'to' option is empty.")
 
-		for mail_name_pair in conf_to.split(";"):
-			mail_name = mail_name_pair.split(":")
-			if len(mail_name) == 1:
+		for email_name_pair in conf_to.split(";"):
+			email_name = email_name_pair.split(":")
+			if len(email_name) == 1:
 				ret.append({
-					"mail": mail_name[0]
+					"email": email_name[0]
 				})
-			elif len(mail_name) == 2:
+			elif len(email_name) == 2:
 				ret.append({
-					"mail": mail_name[0],
-					"name": mail_name[1]
+					"email": email_name[0],
+					"name": email_name[1]
 				})
 			else:
-				raise ValueError("Can't parse email and name from '{}'".format(mail_name))
+				raise ValueError("Can't parse email and name from '{}'".format(email_name))
 
 		return ret
 
 
 	def parse_config_from(self, config):
-		ret = []
+		ret = {}
 
 		conf_from = config.get("from", self.Config["from"])
 		if len(conf_from) == 0:
 			raise ValueError("The 'from' option is empty.")
 
-		mail_name = conf_from.split(":")
-		if len(mail_name) == 1:
-			ret.append({
-				"mail": mail_name[0]
-			})
-		elif len(mail_name) == 2:
-			ret.append({
-				"mail": mail_name[0],
-				"name": mail_name[1]
-			})
+		email_name = conf_from.split(":")
+		if len(email_name) == 1:
+			return {
+				"email": email_name[0]
+			}
+		elif len(email_name) == 2:
+			return {
+				"email": email_name[0],
+				"name": email_name[1]
+			}
 		else:
-			raise ValueError("Can't parse email and name from '{}'".format(mail_name))
-
-		return ret
-
+			raise ValueError("Can't parse email and name from '{}'".format(email_name))
 

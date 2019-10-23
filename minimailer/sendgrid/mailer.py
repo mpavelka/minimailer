@@ -18,7 +18,7 @@ class SendGridMailer(Mailer):
 		subject = self.Config["subject"]
 
 
-		cfg = {
+		data = {
 			'personalizations': [
 				{
 					'to': to_list,
@@ -34,4 +34,6 @@ class SendGridMailer(Mailer):
 			]
 		}
 
-		self.Client.send(cfg)
+		self.Client.client.mail.send.post(
+			request_body=data
+		)

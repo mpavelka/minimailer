@@ -29,16 +29,22 @@ asab.Config.add_defaults({
 
 class MinimailerApp(asab.Application):
 
-	RAW_RE_MAIL = r"\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+"
+	RAW_RE_EMAIL = r"\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+"
 	RAW_RE_NAME = r"\w+(\ \w+)*"
 
 	# john.doe@example.com
 	# john.doe@example.com:John Doe
 	# john.doe@example.com:John Doe;john.doe@example.com;john.doe@example.com
-	RE_FROM = re.compile(r"^{re_mail}(:{re_name})?(;{re_mail}(:{re_name})?)?$".format(
-		re_mail=RAW_RE_MAIL,
+	RE_TO = re.compile(r"^{re_email}(:{re_name})?(;{re_email}(:{re_name})?)?$".format(
+		re_email=RAW_RE_EMAIL,
 		re_name=RAW_RE_NAME
 	))
+	# john.doe@example.com
+	# john.doe@example.com:John Doe
+	RE_FROM = re.compile(r"^{re_email}(:{re_name})?$".format(
+		re_email=RAW_RE_EMAIL,
+		re_name=RAW_RE_NAME
+	)) 
 
 
 	def __init__(self):
@@ -90,14 +96,13 @@ class MinimailerApp(asab.Application):
 
 		data_from = request_json.get("from")
 		if re.match(self.RE_FROM, data_from) is None:
-			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'from' of type dictionary in the request json.")
+			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'from' in format 'john.doe@example.com' or 'john.doe@example.com:John Doe")
 
 		data_json = request_json.get("json")
 		if not isinstance(data_json, dict):
 			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'json' of type dictionary in the request json.")
 
 		# To
-		to_mail = asab.Config["mailer"]["to"]
 		subject = asab.Config["mailer"]["subject"]
 		
 		try:
