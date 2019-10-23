@@ -31,8 +31,14 @@ class SendGridMailer(Mailer):
 					'type': 'text/plain',
 					'value': text
 				}
-			]
+			],
+			'mail_settings': {
+				'sandbox_mode': {
+					'enable': self.SandboxMode
+				}
+			}
 		}
+
 
 		self.Client.client.mail.send.post(
 			request_body=data

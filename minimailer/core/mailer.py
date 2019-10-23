@@ -8,11 +8,13 @@ class Mailer(asab.ConfigObject):
 		'to': '',		# "john.doe@example.com:John Doe; another@mail.com;"
 		'from': '',		# "john.doe@example.com:John Doe"
 		'subject': '',	# "Subject"
+		'sandbox': 'false',
 	}
 
 	def __init__(self, id, config=None):
 		super().__init__(config_section_name="mailer:{}".format(id), config=config)
 		self.Id = id
+		self.SandboxMode = self.Config["sandbox"].lower() == "true"
 
 
 	@abc.abstractmethod
