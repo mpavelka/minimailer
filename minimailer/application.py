@@ -3,10 +3,19 @@ import aiohttp
 import asab.web
 import asab.web.rest
 import re
+import logging
 
 import asab
 from .sendgrid import SendGridModule
 from .core.formatter import JsonTextFormatter
+from .core.service import MinimailerService
+
+
+###
+
+L = logging.getLogger(__name__)
+
+###
 
 
 asab.Config.add_defaults({
@@ -20,24 +29,34 @@ asab.Config.add_defaults({
 
 class MinimailerApp(asab.Application):
 
-	RE_EMAIL = re.compile(r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+$")
+	RAW_RE_MAIL = r"\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,15})+"
+	RAW_RE_NAME = r"\w+(\ \w+)*"
+
+	# john.doe@example.com
+	# john.doe@example.com:John Doe
+	# john.doe@example.com:John Doe;john.doe@example.com;john.doe@example.com
+	RE_FROM = re.compile(r"^{re_mail}(:{re_name})?(;{re_mail}(:{re_name})?)?$".format(
+		re_mail=RAW_RE_MAIL,
+		re_name=RAW_RE_NAME
+	))
+
 
 	def __init__(self):
 		super().__init__()
+
 
 		# Web module/service
 		self.add_module(asab.web.Module)
 		websvc = self.get_service('asab.WebService')
 
-		# Mail providers
-		self.add_module(SendGridModule)
-		self.sendgrid_client_id = asab.Config["mailer"]["sendgrid_api_key"]
-		self.SendGridService = self.get_service('minimailer.SendGridService')
-		self.SendGridService.create_client(
-			id=self.sendgrid_client_id,
-			api_key=asab.Config["mailer"]["sendgrid_api_key"]
-		)
+		# Minimailer service
+		self.MinimailerService = MinimailerService(self)
 
+		# Modules
+		self.add_module(SendGridModule)
+
+		# WEB
+		#
 		# Create a dedicated web container
 		self.WebContainer = asab.web.WebContainer(websvc, 'minimailer:api')
 		# JSON exception middleware
@@ -47,7 +66,7 @@ class MinimailerApp(asab.Application):
 		self.WebContainer.WebApp.router.add_get('/ping', self.get_ping)
 
 		# sendmail
-		self.WebContainer.WebApp.router.add_post('/send', self.post_mail)
+		self.WebContainer.WebApp.router.add_post('/send/{mailer_id}', self.post_mail)
 
 
 	async def get_ping(self, request):
@@ -61,35 +80,37 @@ class MinimailerApp(asab.Application):
 
 
 	async def post_mail(self, request):
+		mailer_id = request.match_info['mailer_id']
+		mailer = self.MinimailerService.MailerRegistry.get(mailer_id)
+
+		if mailer is None:
+			raise aiohttp.web.HTTPNotFound(reason="Mailer with ID '{}' not registered.".format(mailer_id)) 
+
 		request_json = await request.json()
 
 		data_from = request_json.get("from")
-		if not isinstance(data_from, dict):
-			raise aiohttp.web.HTTPBadRequest("There must be a field 'from' of type dictionary in the request json.")
-		
-		from_mail = data_from.get("mail", "")
-		if re.match(self.RE_EMAIL, from_mail) is None:
-			raise aiohttp.web.HTTPBadRequest("Invalid email address in 'from.mail'.")
+		if re.match(self.RE_FROM, data_from) is None:
+			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'from' of type dictionary in the request json.")
 
 		data_json = request_json.get("json")
 		if not isinstance(data_json, dict):
-			raise aiohttp.web.HTTPBadRequest("There must be a field 'json' of type dictionary in the request json.")
+			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'json' of type dictionary in the request json.")
 
 		# To
 		to_mail = asab.Config["mailer"]["to"]
 		subject = asab.Config["mailer"]["subject"]
-			
-		self.SendGridService.send_mail(
-			client_id=self.sendgrid_client_id,
-			from_dict={
-				"mail": from_mail
-			},
-			to_list=[
-				{"mail": to_mail}
-			],
-			subject=subject,
-			text=JsonTextFormatter().format(data_json)
-		)
+		
+		try:
+			mailer.send_mail(
+				text=JsonTextFormatter().format(data_json),
+				config={
+					"subject": subject,
+					"from": data_from
+				}
+			)
+		except Exception as e:
+			L.error("Couldn't send email: {}".format(e))
+			raise aiohttp.web.HTTPBadGateway()
 
 		return asab.web.rest.json_response(
 			request,
