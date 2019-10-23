@@ -39,9 +39,7 @@ class SendGridMailer(Mailer):
 
 		if self.template_id is not None:
 			# TODO: Configurable validation rules for 'data'
-			body['personalizations'].append({
-				'dynamic_template_data': data
-			})
+			body['personalizations'][0]['dynamic_template_data'] = data
 			body['template_id'] = self.template_id
 
 		elif self.text_formatter is not None:
@@ -54,8 +52,6 @@ class SendGridMailer(Mailer):
 				]
 			})
 
-		print(body)
-
-		# self.Client.client.mail.send.post(
-		# 	request_body=body
-		# )
+		self.Client.client.mail.send.post(
+			request_body=body
+		)
