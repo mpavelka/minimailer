@@ -1,6 +1,8 @@
 import abc
 import asab
 
+from .formatter import JsonTextFormatter
+
 
 class Mailer(asab.ConfigObject):
 
@@ -9,6 +11,8 @@ class Mailer(asab.ConfigObject):
 		'from': '',		# "john.doe@example.com:John Doe"
 		'subject': '',	# "Subject"
 		'sandbox': 'false',
+		'text_formatter': '',
+		'html_formatter': '',
 	}
 
 	def __init__(self, id, config=None):
@@ -16,11 +20,15 @@ class Mailer(asab.ConfigObject):
 		self.Id = id
 		self.SandboxMode = self.Config["sandbox"].lower() == "true"
 
+		if self.Config["text_formatter"] == "json":
+			self.text_formatter = JsonTextFormatter()
+		else:
+			self.text_formatter = None
+
 
 	@abc.abstractmethod
 	def send_mail(self,
-		text=None,
-		html=None,
+		data,
 		config={}
 	):
 		raise NotImplemented()

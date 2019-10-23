@@ -7,7 +7,6 @@ import logging
 
 import asab
 from .sendgrid import SendGridModule
-from .core.formatter import JsonTextFormatter
 from .core.service import MinimailerService
 
 
@@ -107,7 +106,7 @@ class MinimailerApp(asab.Application):
 		
 		try:
 			mailer.send_mail(
-				text=JsonTextFormatter().format(data_json),
+				data=data_json,
 				config={
 					"subject": subject,
 					"from": data_from

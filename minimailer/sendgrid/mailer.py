@@ -4,13 +4,17 @@ from sendgrid import SendGridAPIClient
 class SendGridMailer(Mailer):
 
 	def __init__(self, id, config=None):
+		self.ConfigDefaults.update({
+			"sendgrid_api_key": "",
+			"template_id": "",
+		})
 		super().__init__(id, config=None)
 		self.Client = SendGridAPIClient(self.Config["sendgrid_api_key"])
+		self.template_id = self.Config["template_id"] if len(self.Config["template_id"]) > 0 else None
 
 
 	def send_mail(self,
-		text=None,
-		html=None,
+		data,
 		config={}
 	):
 		to_list = self.parse_config_to(config)
@@ -18,7 +22,7 @@ class SendGridMailer(Mailer):
 		subject = self.Config["subject"]
 
 
-		data = {
+		body = {
 			'personalizations': [
 				{
 					'to': to_list,
@@ -26,12 +30,6 @@ class SendGridMailer(Mailer):
 				}
 			],
 			'from': from_dict,
-			'content': [
-				{
-					'type': 'text/plain',
-					'value': text
-				}
-			],
 			'mail_settings': {
 				'sandbox_mode': {
 					'enable': self.SandboxMode
@@ -39,7 +37,25 @@ class SendGridMailer(Mailer):
 			}
 		}
 
+		if self.template_id is not None:
+			# TODO: Configurable validation rules for 'data'
+			body['personalizations'].append({
+				'dynamic_template_data': data
+			})
+			body['template_id'] = self.template_id
 
-		self.Client.client.mail.send.post(
-			request_body=data
-		)
+		elif self.text_formatter is not None:
+			body.update({
+				'content': [
+					{
+						'type': 'text/plain',
+						'value': self.text_formatter.format(data)
+					}
+				]
+			})
+
+		print(body)
+
+		# self.Client.client.mail.send.post(
+		# 	request_body=body
+		# )
