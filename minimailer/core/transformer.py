@@ -11,4 +11,6 @@ class KeyValueArrayTransformer(object):
 				"key": key,
 				"value": value
 			})
-		return res
+		return {
+			"keyvaluearray": res
+		}
