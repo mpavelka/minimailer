@@ -37,6 +37,9 @@ class SendGridMailer(Mailer):
 			}
 		}
 
+		if self.data_transformer is not None:
+			data = self.data_transformer.transform(data)
+
 		if self.template_id is not None:
 			# TODO: Configurable validation rules for 'data'
 			body['personalizations'][0]['dynamic_template_data'] = data

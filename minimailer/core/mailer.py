@@ -2,6 +2,7 @@ import abc
 import asab
 
 from .formatter import JsonTextFormatter
+from .transformer import KeyValueArrayTransformer
 
 
 class Mailer(asab.ConfigObject):
@@ -11,6 +12,7 @@ class Mailer(asab.ConfigObject):
 		'from': '',		# "john.doe@example.com:John Doe"
 		'subject': '',	# "Subject"
 		'sandbox': 'false',
+		'data_transformer': '',
 		'text_formatter': '',
 		'html_formatter': '',
 	}
@@ -24,6 +26,12 @@ class Mailer(asab.ConfigObject):
 			self.text_formatter = JsonTextFormatter()
 		else:
 			self.text_formatter = None
+
+		# Transformer
+		if self.Config["data_transformer"] == "keyvaluearray":
+			self.data_transformer = KeyValueArrayTransformer()
+		else:
+			self.data_transformer = None
 
 
 	@abc.abstractmethod
