@@ -13,23 +13,30 @@ class SendGridMailer(Mailer):
 		self.template_id = self.Config["template_id"] if len(self.Config["template_id"]) > 0 else None
 
 
-	def send_mail(self,
-		data,
-		config={}
-	):
-		to_list = self.parse_config_to(config)
-		from_dict = self.parse_config_from(config)
-		subject = self.Config["subject"]
+	def send_mail(self, data, extra={}):
 
+		params = self.parse_params(
+			data=data,
+			extra=extra
+		)
+
+		if len(params["to"]) == 0:
+			raise ValueError("'to' is empty.")
+		if len(params["from"]) == 0:
+			raise ValueError("'from' is empty.")
+
+		subject = self.Config["subject"]
 
 		body = {
 			'personalizations': [
 				{
-					'to': to_list,
+					'to': params["to"],
+					'cc': params["cc"],
+					'bcc': params["bcc"],
 					'subject': subject
 				}
 			],
-			'from': from_dict,
+			'from': params["from"],
 			'mail_settings': {
 				'sandbox_mode': {
 					'enable': self.SandboxMode

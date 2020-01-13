@@ -91,26 +91,9 @@ class MinimailerApp(asab.Application):
 		if mailer is None:
 			raise aiohttp.web.HTTPNotFound(reason="Mailer with ID '{}' not registered.".format(mailer_id)) 
 
-		request_json = await request.json()
-
-		data_from = request_json.get("from")
-		if re.match(self.RE_FROM, data_from) is None:
-			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'from' in format 'john.doe@example.com' or 'john.doe@example.com:John Doe")
-
-		data_json = request_json.get("json")
-		if not isinstance(data_json, dict):
-			raise aiohttp.web.HTTPBadRequest(reason="There must be a field 'json' of type dictionary in the request json.")
-
-		# To
-		subject = asab.Config["mailer"]["subject"]
-		
 		try:
 			mailer.send_mail(
-				data=data_json,
-				config={
-					"subject": subject,
-					"from": data_from
-				}
+				data=await request.json()
 			)
 		except Exception as e:
 			L.error("Couldn't send email: {}".format(e))
