@@ -4,6 +4,8 @@ import asab.web
 import asab.web.rest
 import re
 import logging
+import python_http_client
+from urllib.error import HTTPError
 
 import asab
 from .sendgrid import SendGridModule
@@ -95,6 +97,9 @@ class MinimailerApp(asab.Application):
 			mailer.send_mail(
 				data=await request.json()
 			)
+		except (HTTPError, python_http_client.exceptions.BadRequestsError) as e:
+			L.error("Couldn't send email: {}: {}".format(e, e.body))
+			raise aiohttp.web.HTTPBadGateway()
 		except Exception as e:
 			L.error("Couldn't send email: {}".format(e))
 			raise aiohttp.web.HTTPBadGateway()

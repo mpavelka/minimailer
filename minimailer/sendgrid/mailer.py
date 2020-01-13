@@ -31,8 +31,6 @@ class SendGridMailer(Mailer):
 			'personalizations': [
 				{
 					'to': params["to"],
-					'cc': params["cc"],
-					'bcc': params["bcc"],
 					'subject': subject
 				}
 			],
@@ -43,6 +41,13 @@ class SendGridMailer(Mailer):
 				}
 			}
 		}
+		# CC
+		if len(params["cc"]) > 0:
+			body['personalizations'][0]['cc'] = params["cc"]
+		# BCC
+		if len(params["bcc"]) > 0:
+			body['personalizations'][0]['bcc'] = params["bcc"]
+
 
 		if self.data_transformer is not None:
 			data = self.data_transformer.transform(data)
