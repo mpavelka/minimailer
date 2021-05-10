@@ -1,6 +1,7 @@
 import asab
 import aiohttp
 import logging
+import os
 import python_http_client
 from urllib.error import HTTPError
 
@@ -9,6 +10,15 @@ from urllib.error import HTTPError
 L = logging.getLogger(__name__)
 
 ###
+
+asab.Config.add_defaults({
+	"minimailer:api": {
+		"listen": "{}:{}".format(
+			os.getenv('HOST', "0.0.0.0"),
+			os.getenv('PORT', "8080"),
+		)
+	}
+})
 
 
 class MinimailerRestHandler(object):
