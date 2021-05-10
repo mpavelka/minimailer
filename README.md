@@ -11,7 +11,7 @@ Minimailer is is easy to configure. Just put the following into `./etc/site.conf
 engine=sendgrid
 sendgrid_api_key=SG.XXXXXX-tgw.XXXXXXXXXXXXXXXXXXXXXXXX
 to=info@example.com
-from=${from}
+from=$${from}
 text_formatter=json
 ```
 
