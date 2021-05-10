@@ -7,8 +7,7 @@ Minimailer is a microservice that bridges your web / mobile application to SMTP 
 Minimailer is is easy to configure. Just put the following into `./etc/site.conf`:
 
 ```
-[mailer:sendgrid1]
-engine=sendgrid
+[mailer:sendgrid:sendgrid1]
 sendgrid_api_key=SG.XXXXXX-tgw.XXXXXXXXXXXXXXXXXXXXXXXX
 to=info@example.com
 from=$${from}
@@ -25,7 +24,7 @@ The microservice is now running and listening at `localhost:8080`
 
 In order to send an email from `john.doe@example.com` just send a REST call:
 
-	$ curl -X POST 'http://localhost:8080/send/sendgrid1' \
+	$ curl -X POST 'http://localhost:8080/send/sendgrid:sendgrid1' \
 		--header 'Content-Type: application/json' \
 		--data-raw '{
 			"from": "john.doe@example.com:John Doe",
